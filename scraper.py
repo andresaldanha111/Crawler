@@ -1,5 +1,8 @@
 import re
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup
+import json
+import ast
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -15,7 +18,66 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+
+    urls = ('ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu')
+    ret = set()
+
+    try:
+        bs = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    except:
+        return list()
+    
+    #Load map with word frequencies
+    with open('freq.txt', 'r+') as f:
+        data = f.read()
+
+    map = ast.literal_eval(data)
+
+    words = bs.get_text().split()
+
+    #Check if this page contains the most words
+    with open('long.txt', 'r') as f:
+        data = f.read().split()
+    if len(words) > int(data[1]):
+        with open('long.txt', 'w') as f:
+            string = resp.url + " " + str(len(words))
+            f.write(string)
+
+    #Traverse through all the words, and update the frequency map
+    for word in words:
+        if word.upper() in map:
+            #Increment frequncy is token is found in list again
+            # Constant time 
+            map[word.upper()] += 1
+        else:
+            #Initialize frequency to 1 if a undiscovered token is found
+            #Constant time
+             map[word.upper()] = 1
+    
+    #Sort map
+    map = {k: v for k, v in sorted(map.items(), key=lambda item: item[1], reverse = True)}
+
+    #Write to file
+    with open('freq.txt', 'w') as f:
+        f.write(str(map))
+
+    #Find all the links
+    for a in bs.findAll('a', href = True):
+        link = a['href'].split('#')
+        for b in link:
+            for u in urls:
+                if(u in b):
+                    #Don't save Emails
+                    if('@' in b):
+                        break
+                    if('pdf' in b):
+                        break
+                    #Add https to link
+                    if(b[0] == '/'):
+                        b = 'https:' + b
+                    ret.add(b)
+                    break
+    return ret
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -23,7 +85,7 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
-        if parsed.scheme not in set(["http", "https"]):
+        if parsed.scheme in set(["https://password.ics.uci.edu"]):
             return False
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
