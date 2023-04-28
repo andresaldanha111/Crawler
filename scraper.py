@@ -74,7 +74,8 @@ def extract_next_links(url, resp):
         curr_url = a['href'].split('#')[0]
         if not bool(urlparse(curr_url).netloc):
             curr_url = urljoin(url, curr_url, allow_fragments=False)
-        ret.add(curr_url) #NEED TO RETURN ABSOLUTE LINKS
+        if curr_url != url:
+            ret.add(curr_url) #NEED TO RETURN ABSOLUTE LINKS
         #AND REMOVE ANYTHING AFTER # (i.e. http://www.ics.uci.edu#aaa should just be http://www.ics.uci.edu)
     return ret
 
