@@ -19,31 +19,38 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
 
+    #Set to store links
     ret = set()
 
-    
+    #Create BeautifulSoup object so site can be scraped
     try:
         bs = BeautifulSoup(resp.raw_response.content, 'html.parser')
     except:
         return list()
     
-    #Load map with word frequencies
+    #Load dictionary with word frequencies from original text file
+    #Note to user: make sure you reset the text file manually if you're running --restart
     with open('freq.txt', 'r+') as f:
         data = f.read()
 
+    #convert data from text file into dictionary object
     map = ast.literal_eval(data)
 
-    words = bs.get_text().split()
+    #Get all the words from the site
+    #CHANGE TO TOKENIZER USING nltk tokenizer INSTEAD OF SPLIT
+    words = bs.get_text().split() # Should be a list of words
 
     #Check if this page contains the most words
     with open('long.txt', 'r') as f:
         data = f.read().split()
+    
+    #Update text file if it contains the most words
     if len(words) > int(data[1]):
         with open('long.txt', 'w') as f:
             string = resp.url + " " + str(len(words))
             f.write(string)
 
-    #Traverse through all the words, and update the frequency map
+    #Traverse through all the words to update the frequency map
     for word in words:
         if word.upper() in map:
             #Increment frequncy is token is found in list again
@@ -57,13 +64,13 @@ def extract_next_links(url, resp):
     #Sort map
     map = {k: v for k, v in sorted(map.items(), key=lambda item: item[1], reverse = True)}
 
-    #Write to file
+    #Write to map to the file
     with open('freq.txt', 'w') as f:
         f.write(str(map))
 
     #Find all the links
     for a in bs.findAll('a', href = True):
-        ret.add(a['href']) #NEED TO RETURN ABSOLUTE LINKS
+        ret.add(a['href]) #NEED TO RETURN ABSOLUTE LINKS
         #AND REMOVE ANYTHING AFTER # (i.e. http://www.ics.uci.edu#aaa should just be http://www.ics.uci.edu)
     return ret
 
