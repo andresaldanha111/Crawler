@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 import json
 import ast
@@ -37,8 +37,8 @@ def extract_next_links(url, resp):
     map = ast.literal_eval(data)
 
     #Get all the words from the site
-    #CHANGE TO TOKENIZER USING nltk tokenizer INSTEAD OF SPLIT
-    words = bs.get_text().split() # Should be a list of words
+    # CHANGE TO TOKENIZER USING nltk tokenizer INSTEAD OF SPLIT
+    words = bs.get_text().split()  # Should be a list of words
 
     #Check if this page contains the most words
     with open('long.txt', 'r') as f:
@@ -70,7 +70,10 @@ def extract_next_links(url, resp):
 
     #Find all the links
     for a in bs.findAll('a', href = True):
-        ret.add(a['href']) #NEED TO RETURN ABSOLUTE LINKS
+        curr_url = a['href'].split('#')[0]
+        if not bool(urlparse(curr_url).netloc):
+            curr_url = urljoin(url, curr_url, allow_fragments=False)
+        ret.add(curr_url) #NEED TO RETURN ABSOLUTE LINKS
         #AND REMOVE ANYTHING AFTER # (i.e. http://www.ics.uci.edu#aaa should just be http://www.ics.uci.edu)
     return ret
 
