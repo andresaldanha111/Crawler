@@ -19,9 +19,9 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
 
-    urls = ('ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu')
     ret = set()
 
+    
     try:
         bs = BeautifulSoup(resp.raw_response.content, 'html.parser')
     except:
@@ -63,15 +63,8 @@ def extract_next_links(url, resp):
 
     #Find all the links
     for a in bs.findAll('a', href = True):
-        link = a['href'].split('#')
-        for b in link:
-            for u in urls:
-                if(u in b):
-                    #Add https to link
-                    if(b[0] == '/'):
-                        b = 'https:' + b
-                    ret.add(b)
-                    break
+        ret.add(a['href]) #NEED TO RETURN ABSOLUTE LINKS
+        #AND REMOVE ANYTHING AFTER # (i.e. http://www.ics.uci.edu#aaa should just be http://www.ics.uci.edu)
     return ret
 
 def is_valid(url):
