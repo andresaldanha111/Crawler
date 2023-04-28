@@ -83,10 +83,20 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
+
+        # If scheme is not "http" or "https", do not crawl
         if parsed.scheme not in set(["http", "https"]):
             return False
+        
+        # If domain is not the following, do not crawl:
+        #   *ics.uci.edu/*
+        #   *cs.uci.edu/*
+        #   *informatics.uci.edu/*
+        #   *stat.uci.edu/*
         if not re.match(r".*(i?cs|informatics|stat)\.uci\.edu", parsed.hostname):
             return False
+        
+        # If url is a non-text file, do not crawl; otherwise crawl the url
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
