@@ -37,8 +37,7 @@ def extract_next_links(url, resp):
     map = ast.literal_eval(data)
 
     #Get all the words from the site
-    #CHANGE TO TOKENIZER USING nltk tokenizer INSTEAD OF SPLIT
-    words = bs.get_text().split() # Should be a list of words
+    words = re.findall(r'[a-zA-Z0-9]+', bs.get_text(), re.ASCII) # Should be a list of words
 
     #Check if this page contains the most words
     with open('long.txt', 'r') as f:
@@ -70,7 +69,7 @@ def extract_next_links(url, resp):
 
     #Find all the links
     for a in bs.findAll('a', href = True):
-        ret.add(a['href]) #NEED TO RETURN ABSOLUTE LINKS
+        ret.add(a['href']) #NEED TO RETURN ABSOLUTE LINKS
         #AND REMOVE ANYTHING AFTER # (i.e. http://www.ics.uci.edu#aaa should just be http://www.ics.uci.edu)
     return ret
 
