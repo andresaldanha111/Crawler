@@ -67,11 +67,6 @@ def extract_next_links(url, resp):
         for b in link:
             for u in urls:
                 if(u in b):
-                    #Don't save Emails
-                    if('@' in b):
-                        break
-                    if('pdf' in b):
-                        break
                     #Add https to link
                     if(b[0] == '/'):
                         b = 'https:' + b
@@ -85,7 +80,7 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
-        if parsed.scheme in set(["https://password.ics.uci.edu"]):
+        if parsed.scheme not in set(["http", "https"]):
             return False
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
