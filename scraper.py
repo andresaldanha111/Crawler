@@ -70,7 +70,7 @@ def extract_next_links(url, resp):
 
     #Find all the links
     for a in bs.findAll('a', href = True):
-        ret.add(a['href]) #NEED TO RETURN ABSOLUTE LINKS
+        ret.add(a['href']) #NEED TO RETURN ABSOLUTE LINKS
         #AND REMOVE ANYTHING AFTER # (i.e. http://www.ics.uci.edu#aaa should just be http://www.ics.uci.edu)
     return ret
 
