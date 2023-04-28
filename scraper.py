@@ -38,7 +38,7 @@ def extract_next_links(url, resp):
 
     #Get all the words from the site
     # CHANGE TO TOKENIZER USING nltk tokenizer INSTEAD OF SPLIT
-    words = bs.get_text().split()  # Should be a list of words
+    words = re.findall(r'[a-zA-Z0-9]+', bs.get_text())  # Should be a list of words
 
     #Check if this page contains the most words
     with open('long.txt', 'r') as f:
