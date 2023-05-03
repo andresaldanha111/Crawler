@@ -13,26 +13,26 @@ def scraper(url, resp):
     if is_valid(url) and 'ics.uci.edu' in str(url):
         # Load dictionary with word frequencies from original text file
         # Note to user: make sure you reset the text file manually if you're running --restart
-        with open('subdomains.txt', 'r+') as f:
+        with open('sub_counts.txt', 'r+') as f:
             data = f.read()
 
         # convert data from text file into dictionary object
         map = ast.literal_eval(data)
 
         # Update the number of unique pages for each subdomain
-        url = urlparse(url)
-        if url.hostname in map:
+        parsed_url = urlparse(url)
+        if parsed_url.hostname in map:
             # Increment page count if subdomain is found in dictionary again
-            map[url.hostname] += len(returnList)
+            map[parsed_url.hostname] += len(returnList)
         else:
             # Initialize frequency if a undiscovered subdomain is found
-            map[url.hostname] = len(returnList)
+            map[parsed_url.hostname] = len(returnList)
 
         # Sort map
         map = {k: v for k, v in sorted(map.items())}
 
         # Write to map to the file
-        with open('subdomains.txt', 'w') as f:
+        with open('sub_counts.txt', 'w') as f:
             f.write(str(map))
 
     return returnList
