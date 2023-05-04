@@ -66,7 +66,6 @@ def extract_next_links(url, resp):
     map = ast.literal_eval(data)
 
     #Get all the words from the site
-    # CHANGE TO TOKENIZER USING nltk tokenizer INSTEAD OF SPLIT
     words = word_tokenize(bs.get_text())  # Should be a list of words
 
     #Check if this page contains the most words
