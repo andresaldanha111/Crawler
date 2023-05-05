@@ -5,35 +5,38 @@ import json
 import ast
 from nltk import word_tokenize
 
+word_frequencies = {}
+subdomain_count = {}
+
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     returnList = [link for link in links if is_valid(link)]
 
     # check if current_url is a "ics.uci.edu" subdomain
     if is_valid(url) and 'ics.uci.edu' in str(url):
-        # Load dictionary with word frequencies from original text file
+        # Load dictionary with subdomains from original text file
         # Note to user: make sure you reset the text file manually if you're running --restart
-        with open('sub_counts.txt', 'r+') as f:
-            data = f.read()
+        # with open('sub_counts.txt', 'r+') as f:
+        #     data = f.read()
 
         # convert data from text file into dictionary object
-        map = ast.literal_eval(data)
+        # map = ast.literal_eval(data)
 
         # Update the number of unique pages for each subdomain
         parsed_url = urlparse(url)
-        if parsed_url.hostname in map:
+        if parsed_url.hostname in subdomain_count:
             # Increment page count if subdomain is found in dictionary again
-            map[parsed_url.hostname] += len(returnList)
+            subdomain_count[parsed_url.hostname] += len(returnList)
         else:
             # Initialize frequency if a undiscovered subdomain is found
-            map[parsed_url.hostname] = len(returnList)
+            subdomain_count[parsed_url.hostname] = len(returnList)
 
         # Sort map
-        map = {k: v for k, v in sorted(map.items())}
+        subdomain_count = {k: v for k, v in sorted(subdomain_count.items())}
 
         # Write to map to the file
         with open('sub_counts.txt', 'w') as f:
-            f.write(str(map))
+            f.write(str(subdomain_count))
 
     return returnList
 
@@ -59,11 +62,11 @@ def extract_next_links(url, resp):
     
     #Load dictionary with word frequencies from original text file
     #Note to user: make sure you reset the text file manually if you're running --restart
-    with open('freq.txt', 'r+') as f:
-        data = f.read()
+    # with open('freq.txt', 'r+') as f:
+    #     data = f.read()
 
     #convert data from text file into dictionary object
-    map = ast.literal_eval(data)
+    # map = ast.literal_eval(data)
 
     #Get all the words from the site
     words = word_tokenize(bs.get_text())  # Should be a list of words
@@ -80,17 +83,17 @@ def extract_next_links(url, resp):
 
     #Traverse through all the words to update the frequency map
     for word in words:
-        if word.upper() in map:
+        if word.upper() in word_frequencies:
             #Increment frequncy is token is found in list again
             # Constant time 
-            map[word.upper()] += 1
+            word_frequencies[word.upper()] += 1
         else:
             #Initialize frequency to 1 if a undiscovered token is found
             #Constant time
-             map[word.upper()] = 1
+            word_frequencies[word.upper()] = 1
     
     #Sort map
-    map = {k: v for k, v in sorted(map.items(), key=lambda item: item[1], reverse = True)}
+    word_frequencies = {k: v for k, v in sorted(word_frequencies.items(), key=lambda item: item[1], reverse = True)}
 
     #Write to map to the file
     with open('freq.txt', 'w') as f:
