@@ -1,4 +1,5 @@
 import ast
+import re
 
 stopwords = "a about above after again against all am an and any are aren't as at " + \
 "be because been before being below between both but by can't cannot could couldn't " + \
@@ -25,7 +26,7 @@ def maxWordFrequencies():
         # Output the 50 most common words not including stop words into a file
         with open("commonwords.txt", "w") as out:
             for k in sorted(freq, key=lambda x : -freq[x]):
-                if k not in stopwords:
+                if k not in stopwords and re.search(r"[0-9]", k):
                     count += 1
                     out.write(k + "\n")
                 if count >= 50:
