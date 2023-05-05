@@ -23,10 +23,10 @@ def maxWordFrequencies():
         
         count = 0 # A counter for number of words outputted
 
-        # Output the 50 most common words not including stop words into a file
+        # Output the 50 most common words not including stop words and numbers into a file
         with open("commonwords.txt", "w") as out:
             for k in sorted(freq, key=lambda x : -freq[x]):
-                if k not in stopwords and re.search(r"[0-9]", k):
+                if k not in stopwords and re.search(r"[0-9]", k) is None:
                     count += 1
                     out.write(k + "\n")
                 if count >= 50:
