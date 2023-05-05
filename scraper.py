@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import json
 import ast
 from nltk import word_tokenize
+import time
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -23,60 +24,70 @@ def extract_next_links(url, resp):
     #Set to store links
     ret = set()
 
+    if(resp.status >= 300 and resp.status < 400):
+        return list()
+
     #Create BeautifulSoup object so site can be scraped
     try:
         bs = BeautifulSoup(resp.raw_response.content, 'html.parser')
     except:
         return list()
     
-    #Load dictionary with word frequencies from original text file
-    #Note to user: make sure you reset the text file manually if you're running --restart
-    with open('freq.txt', 'r+') as f:
-        data = f.read()
+    # #Load dictionary with word frequencies from original text file
+    # #Note to user: make sure you reset the text file manually if you're running --restart
+    # with open('freq.txt', 'r+') as f:
+    #     data = f.read()
 
-    #convert data from text file into dictionary object
-    map = ast.literal_eval(data)
+    # #convert data from text file into dictionary object
+    # map = ast.literal_eval(data)
 
-    #Get all the words from the site
-    # CHANGE TO TOKENIZER USING nltk tokenizer INSTEAD OF SPLIT
-    words = word_tokenize(bs.get_text())  # Should be a list of words
+    # #Get all the words from the site
+    # # CHANGE TO TOKENIZER USING nltk tokenizer INSTEAD OF SPLIT
+    # words = word_tokenize(bs.get_text())  # Should be a list of words
 
-    #Check if this page contains the most words
-    with open('long.txt', 'r') as f:
-        data = f.read().split()
+    # #Check if this page contains the most words
+    # with open('long.txt', 'r') as f:
+    #     data = f.read().split()
     
-    #Update text file if it contains the most words
-    if len(words) > int(data[1]):
-        with open('long.txt', 'w') as f:
-            string = resp.url + " " + str(len(words))
-            f.write(string)
+    # #Update text file if it contains the most words
+    # if len(words) > int(data[1]):
+    #     with open('long.txt', 'w') as f:
+    #         string = resp.url + " " + str(len(words))
+    #         f.write(string)
 
-    #Traverse through all the words to update the frequency map
-    for word in words:
-        if word.upper() in map:
-            #Increment frequncy is token is found in list again
-            # Constant time 
-            map[word.upper()] += 1
-        else:
-            #Initialize frequency to 1 if a undiscovered token is found
-            #Constant time
-             map[word.upper()] = 1
+    # #Traverse through all the words to update the frequency map
+    # for word in words:
+    #     if word.upper() in map:
+    #         #Increment frequncy is token is found in list again
+    #         # Constant time 
+    #         map[word.upper()] += 1
+    #     else:
+    #         #Initialize frequency to 1 if a undiscovered token is found
+    #         #Constant time
+    #          map[word.upper()] = 1
     
-    #Sort map
-    map = {k: v for k, v in sorted(map.items(), key=lambda item: item[1], reverse = True)}
+    # #Sort map
+    # map = {k: v for k, v in sorted(map.items(), key=lambda item: item[1], reverse = True)}
 
-    #Write to map to the file
-    with open('freq.txt', 'w') as f:
-        f.write(str(map))
+    # #Write to map to the file
+    # with open('freq.txt', 'w') as f:
+    #     f.write(str(map))
 
     #Find all the links
     for a in bs.findAll('a', href = True):
-        curr_url = a['href'].split('#')[0]
+        curr_url = a['href'].split('#')[0] 
+        #REMOVE ANYTHING AFTER # (i.e. http://www.ics.uci.edu#aaa should just be http://www.ics.uci.edu)
+        
         if not bool(urlparse(curr_url).netloc):
+            #NEED TO RETURN ABSOLUTE LINKS
             curr_url = urljoin(url, curr_url, allow_fragments=False)
+
+        if curr_url[0] == '/': 
+            #Some URL's are missing 'https' at the beginning
+            curr_url = 'https:' + curr_url
+
         if curr_url != url:
-            ret.add(curr_url) #NEED TO RETURN ABSOLUTE LINKS
-        #AND REMOVE ANYTHING AFTER # (i.e. http://www.ics.uci.edu#aaa should just be http://www.ics.uci.edu)
+            ret.add(curr_url)
     return ret
 
 def is_valid(url):
@@ -101,7 +112,7 @@ def is_valid(url):
         # If url is a non-text file, do not crawl; otherwise crawl the url
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
-            + r"|png|tiff?|mid|mp2|mp3|mp4"
+            + r"|png|tiff?|mid|mp2|mp3|mp4|mpg"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
             + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
