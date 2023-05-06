@@ -16,15 +16,8 @@ def main(config_file, restart):
 
 
 if __name__ == "__main__":
-    # Create ArgumentParser instance with description
-    parser = argparse.ArgumentParser(description="This script does something useful.")
-    
-    # Add arguments with help messages
-    parser.add_argument("--restart", action="store_true", default=False, help="Restart the script.")
-    parser.add_argument("--config_file", type=str, default="config.ini", help="Path to the configuration file.")
-    
-    # Use argparse.ArgumentParser() context manager
-    with parser:
-        # Parse arguments and call main() function
-        args = parser.parse_args()
-        main(args.config_file, args.restart)
+    parser = ArgumentParser()
+    parser.add_argument("--restart", action="store_true", default=False)
+    parser.add_argument("--config_file", type=str, default="config.ini")
+    args = parser.parse_args()
+    main(args.config_file, args.restart)

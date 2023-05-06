@@ -6,7 +6,6 @@ from utils import get_logger
 import scraper
 import time
 
-
 class Worker(Thread):
     def __init__(self, worker_id, config, frontier):
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
@@ -18,17 +17,43 @@ class Worker(Thread):
         super().__init__(daemon=True)
         
     def run(self):
-        while True:
-            tbd_url = self.frontier.get_tbd_url()
-            if not tbd_url:
-                self.logger.info("Frontier is empty. Stopping Crawler.")
-                break
-            resp = download(tbd_url, self.config, self.logger)
-            self.logger.info(
-                f"Downloaded {tbd_url}, status <{resp.status}>, "
-                f"using cache {self.config.cache_server}.")
-            scraped_urls = scraper.scraper(tbd_url, resp)
-            for scraped_url in scraped_urls:
-                self.frontier.add_url(scraped_url)
-            self.frontier.mark_url_complete(tbd_url)
-            time.sleep(self.config.time_delay)
+        try:
+            while True:
+                tbd_url = self.frontier.get_tbd_url()
+                if not tbd_url:
+                    self.logger.info("Frontier is empty. Stopping Crawler.")
+
+                    # Sort maps
+                    scraper.subdomain_count = {k: v for k, v in sorted(scraper.subdomain_count.items())}
+                    scraper.word_frequencies = {k: v for k, v in sorted(scraper.word_frequencies.items())}
+
+                    # Write information to the file
+                    with open('sub_counts.txt', 'w') as f:
+                        f.write(str(scraper.subdomain_count))
+                    with open('word_freq.txt', 'w') as f:
+                        f.write(str(scraper.word_frequencies))
+                    with open('pages.txt', 'w') as f:
+                        f.write(str(scraper.pagesVisited))
+                    break
+                
+                resp = download(tbd_url, self.config, self.logger)
+                self.logger.info(
+                    f"Downloaded {tbd_url}, status <{resp.status}>, "
+                    f"using cache {self.config.cache_server}.")
+                scraped_urls = scraper.scraper(tbd_url, resp)
+                for scraped_url in scraped_urls:
+                    self.frontier.add_url(scraped_url)
+                self.frontier.mark_url_complete(tbd_url)
+                time.sleep(self.config.time_delay)
+        except KeyboardInterrupt:
+            # Sort maps
+            scraper.subdomain_count = {k: v for k, v in sorted(scraper.subdomain_count.items())}
+            scraper.word_frequencies = {k: v for k, v in sorted(scraper.word_frequencies.items())}
+
+            # Write information to the file
+            with open('sub_counts.txt', 'w') as f:
+                f.write(str(scraper.subdomain_count))
+            with open('word_freq.txt', 'w') as f:
+                f.write(str(scraper.word_frequencies))
+            with open('pages.txt', 'w') as f:
+                f.write(str(scraper.pagesVisited))

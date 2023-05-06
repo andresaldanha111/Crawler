@@ -1,1 +1,1 @@
-http://www.ics.uci.edu/~wjohnson/BIDA/Ch8/prioriterates.txt 80002
+http://www.ics.uci.edu/~kay/wordlist.txt 475850

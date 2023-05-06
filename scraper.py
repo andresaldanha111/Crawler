@@ -1,27 +1,18 @@
 import re
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
-import json
-import ast
 from nltk import word_tokenize
 
-word_frequencies = {}
-subdomain_count = {}
+word_frequencies = {'hello':0}
+subdomain_count = {'hello':0}
+unique_urls = set()
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     returnList = [link for link in links if is_valid(link)]
 
     # check if current_url is a "ics.uci.edu" subdomain
-    if is_valid(url) and 'ics.uci.edu' in str(url):
-        # Load dictionary with subdomains from original text file
-        # Note to user: make sure you reset the text file manually if you're running --restart
-        # with open('sub_counts.txt', 'r+') as f:
-        #     data = f.read()
-
-        # convert data from text file into dictionary object
-        # map = ast.literal_eval(data)
-
+    if 'ics.uci.edu' in str(url):
         # Update the number of unique pages for each subdomain
         parsed_url = urlparse(url)
         if parsed_url.hostname in subdomain_count:
@@ -30,13 +21,6 @@ def scraper(url, resp):
         else:
             # Initialize frequency if a undiscovered subdomain is found
             subdomain_count[parsed_url.hostname] = len(returnList)
-
-        # Sort map
-        subdomain_count = {k: v for k, v in sorted(subdomain_count.items())}
-
-        # Write to map to the file
-        with open('sub_counts.txt', 'w') as f:
-            f.write(str(subdomain_count))
 
     return returnList
 
@@ -51,6 +35,9 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
 
+    if resp.status != 200:
+        return list()
+
     #Set to store links
     ret = set()
 
@@ -59,14 +46,6 @@ def extract_next_links(url, resp):
         bs = BeautifulSoup(resp.raw_response.content, 'html.parser')
     except:
         return list()
-    
-    #Load dictionary with word frequencies from original text file
-    #Note to user: make sure you reset the text file manually if you're running --restart
-    # with open('freq.txt', 'r+') as f:
-    #     data = f.read()
-
-    #convert data from text file into dictionary object
-    # map = ast.literal_eval(data)
 
     #Get all the words from the site
     words = word_tokenize(bs.get_text())  # Should be a list of words
@@ -92,13 +71,6 @@ def extract_next_links(url, resp):
             #Constant time
             word_frequencies[word.upper()] = 1
     
-    #Sort map
-    word_frequencies = {k: v for k, v in sorted(word_frequencies.items(), key=lambda item: item[1], reverse = True)}
-
-    #Write to map to the file
-    with open('freq.txt', 'w') as f:
-        f.write(str(map))
-
     #Find all the links
     for a in bs.findAll('a', href = True):
         curr_url = a['href'].split('#')[0]
@@ -106,7 +78,11 @@ def extract_next_links(url, resp):
             curr_url = urljoin(url, curr_url, allow_fragments=False)
         if curr_url != url:
             ret.add(curr_url) #NEED TO RETURN ABSOLUTE LINKS
-        #AND REMOVE ANYTHING AFTER # (i.e. http://www.ics.uci.edu#aaa should just be http://www.ics.uci.edu)
+        #AND REMOVE ANYTHING AFTER '#' 
+        # (i.e. http://www.ics.uci.edu#aaa should just be http://www.ics.uci.edu)
+
+    unique_urls.append(ret)
+
     return ret
 
 def is_valid(url):
@@ -118,6 +94,23 @@ def is_valid(url):
 
         # If scheme is not "http" or "https", do not crawl
         if parsed.scheme not in set(["http", "https"]):
+            return False
+        
+        BLACKLIST = ["https://www.ics.uci.edu/~eppstein/pix/", "calendar", "event", "events" "commit/", "blob/", "raw/", "blame/", "tree/", "/graphs/"]
+        
+        for domain in BLACKLIST:
+            if domain in url:
+                return False
+            
+        # Regex expression from https://support.archive-it.org/hc/en-us/articles/208332963-Modify-your-crawl-scope-with-a-Regular-Expression
+        # To avoid common traps
+        if(re.match(
+            r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$"
+            + r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$"
+            + r"^.*calendar.*$", parsed.netloc.lower())):
+            return False
+        
+        if re.match(r".*(/calendar/|/blog/|mailto:).*", parsed.path.lower()):
             return False
         
         # If domain is not the following, do not crawl:
